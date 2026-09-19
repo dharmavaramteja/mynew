@@ -1,277 +1,741 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CineVerse · Movie Ticket Booking</title>
+<style>
+:root{
+  --bg:#06070c; --panel:#12151f; --panel2:#1a1e2c; --line:rgba(255,255,255,.10);
+  --txt:#eef1f8; --muted:#98a1b8; --brand:#7c5cff; --brand2:#b18cff;
+  --gold:#ffc44d; --silver:#5aa9ff; --ok:#35d68d; --danger:#ff5c7a;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; color:var(--txt); min-height:100vh;
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  background:
+    radial-gradient(900px 520px at 8% -10%,rgba(124,92,255,.22),transparent 60%),
+    radial-gradient(800px 460px at 92% -6%,rgba(255,92,122,.14),transparent 58%),
+    var(--bg);
+}
+h1,h2,h3{margin:0;letter-spacing:-.02em;line-height:1.15}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.wrap{width:min(1180px,100% - 32px);margin:0 auto}
+.muted{color:var(--muted)}
 
-    <title>Movie Ticket Booking</title>
+/* ---------- nav ---------- */
+header{
+  position:sticky;top:0;z-index:40;backdrop-filter:blur(16px);
+  background:linear-gradient(180deg,rgba(6,7,12,.94),rgba(6,7,12,.6));
+  border-bottom:1px solid var(--line);
+}
+.nav{display:flex;align-items:center;gap:14px;height:66px}
+.logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;letter-spacing:.02em}
+.logo b{background:linear-gradient(100deg,var(--brand2),#ff9ed4);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mark{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px;
+  background:linear-gradient(135deg,var(--brand),#ff7ac2)}
+.pill-city{margin-left:auto;padding:8px 14px;border-radius:99px;font-size:13px;color:var(--muted);
+  border:1px solid var(--line);background:rgba(255,255,255,.04)}
+.pill-city:hover{color:var(--txt)}
+.count{min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:var(--brand);
+  color:#fff;font-size:11.5px;font-weight:700;display:grid;place-items:center}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;
+  border-radius:99px;font-weight:600;font-size:14px;border:1px solid var(--line);
+  background:rgba(255,255,255,.04);transition:.18s}
+.btn:hover{background:rgba(255,255,255,.10);transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(120deg,var(--brand),#a07bff 55%,#ff7ac2);
+  border-color:transparent;color:#fff;box-shadow:0 12px 28px -12px rgba(124,92,255,.9)}
+.btn.gold{background:linear-gradient(120deg,#ffb238,var(--gold));border-color:transparent;color:#241a02}
+.btn.sm{padding:8px 14px;font-size:12.5px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ---------- views ---------- */
+.view{display:none;animation:in .4s cubic-bezier(.22,.61,.36,1)}
+.view.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* ---------- movie grid ---------- */
+.sec-head{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;padding:34px 0 18px}
+.sec-head h2{font-size:26px}
+.sec-head p{margin:6px 0 0;font-size:13.5px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(186px,1fr));gap:20px}
+.card{border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--panel);
+  cursor:pointer;transition:.3s cubic-bezier(.22,.61,.36,1)}
+.card:hover{transform:translateY(-7px);border-color:rgba(124,92,255,.6);
+  box-shadow:0 24px 46px -20px rgba(0,0,0,.95)}
+.poster{position:relative;aspect-ratio:2/3;display:grid;place-items:center;padding:14px;text-align:center;
+  font-weight:800;font-size:17px;line-height:1.2;text-shadow:0 2px 14px rgba(0,0,0,.7)}
+.poster::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,7,12,.6),transparent 60%)}
+.rate{position:absolute;top:9px;right:9px;z-index:2;padding:5px 9px;border-radius:99px;font-size:11.5px;
+  font-weight:700;background:rgba(6,7,12,.8);border:1px solid var(--line);color:var(--gold)}
+.cbody{padding:12px 13px 14px}
+.cbody h3{font-size:14.5px;font-weight:650}
+.cbody .meta{margin-top:6px;font-size:11.8px;color:var(--muted)}
+.overlay{position:absolute;inset:0;z-index:3;display:grid;place-items:center;opacity:0;
+  transition:.3s;background:rgba(6,7,12,.72)}
+.card:hover .overlay{opacity:1}
+
+/* ---------- booking layout ---------- */
+.crumb{display:flex;align-items:center;gap:14px;padding:26px 0 4px;flex-wrap:wrap}
+.crumb h2{font-size:22px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start;padding:20px 0 70px}
+.panel{background:linear-gradient(180deg,var(--panel),rgba(18,21,31,.6));border:1px solid var(--line);
+  border-radius:16px;padding:20px}
+.panel + .panel{margin-top:18px}
+.phead{display:flex;align-items:center;gap:10px;margin-bottom:15px}
+.phead h3{font-size:15.5px}
+.num{width:25px;height:25px;border-radius:8px;display:grid;place-items:center;font-size:12px;
+  font-weight:800;background:linear-gradient(135deg,var(--brand),#a07bff);flex:none}
+.hint{margin-left:auto;font-size:12px;color:var(--muted)}
+
+.dates{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+.date{flex:none;width:72px;padding:11px 0;border-radius:12px;text-align:center;
+  border:1px solid var(--line);background:rgba(255,255,255,.03);transition:.2s}
+.date:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.28)}
+.date.on{background:linear-gradient(160deg,rgba(124,92,255,.38),rgba(124,92,255,.1));
+  border-color:rgba(124,92,255,.8)}
+.dow{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.dnum{font-size:20px;font-weight:800;margin:3px 0 1px}
+.dmon{font-size:10.5px;color:var(--muted)}
+
+.shows{display:flex;gap:10px;flex-wrap:wrap}
+.show{padding:11px 15px;border-radius:12px;text-align:left;border:1px solid var(--line);
+  background:rgba(255,255,255,.03);transition:.2s}
+.show:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.28)}
+.show.on{background:linear-gradient(160deg,rgba(124,92,255,.36),rgba(124,92,255,.1));
+  border-color:rgba(124,92,255,.8)}
+.show .t{font-size:14.5px;font-weight:700}
+.show .m{font-size:11px;color:var(--muted);margin-top:4px}
+.tag{display:inline-block;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;
+  border:1px solid var(--line);background:rgba(255,255,255,.06);margin-right:5px}
+.hot{color:var(--gold)}
+
+/* ---------- seats ---------- */
+.screen{height:11px;max-width:80%;margin:4px auto 0;border-radius:50% 50% 0 0/100% 100% 0 0;
+  background:linear-gradient(180deg,rgba(177,140,255,.95),rgba(124,92,255,.05));
+  box-shadow:0 -6px 30px 4px rgba(124,92,255,.5)}
+.slabel{text-align:center;font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;
+  color:var(--muted);margin:9px 0 20px}
+.map{display:flex;flex-direction:column;gap:8px;align-items:center;overflow-x:auto;padding-bottom:6px}
+.row{display:flex;gap:6px;align-items:center}
+.rlab{width:18px;font-size:11px;color:var(--muted);font-weight:600;text-align:center;flex:none}
+.gap{width:18px;flex:none}
+.seat{width:25px;height:23px;border-radius:7px 7px 4px 4px;flex:none;
+  border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);transition:.16s}
+.seat:hover:not(.taken){transform:translateY(-3px) scale(1.08);background:rgba(255,255,255,.24)}
+.seat.taken{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.06);
+  cursor:not-allowed;opacity:.5}
+.seat.sel{background:linear-gradient(160deg,var(--brand),#a07bff);border-color:#c9b4ff;
+  box-shadow:0 0 0 2px rgba(124,92,255,.32),0 8px 16px -8px rgba(124,92,255,1)}
+.seat.silver:not(.taken):not(.sel){border-color:rgba(90,169,255,.45)}
+.seat.gold:not(.taken):not(.sel){border-color:rgba(255,196,77,.45)}
+.seat.recliner:not(.taken):not(.sel){border-color:rgba(177,140,255,.45)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:18px;
+  font-size:11.5px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+.sw{width:15px;height:14px;border-radius:5px 5px 3px 3px;border:1px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.07)}
+.sw.s{background:linear-gradient(160deg,var(--brand),#a07bff);border-color:#c9b4ff}
+.sw.t{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.07)}
+
+/* ---------- summary ---------- */
+.sum{position:sticky;top:88px}
+.movie-head{display:flex;gap:13px;margin-bottom:16px}
+.mini{width:64px;aspect-ratio:2/3;border-radius:10px;flex:none;border:1px solid var(--line)}
+.divider{height:1px;background:var(--line);margin:15px 0}
+.srow{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;margin-bottom:10px;color:#cfd6e6}
+.srow .k{color:var(--muted)}
+.srow.total{font-size:17px;font-weight:800;color:#fff;margin:0}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;min-height:26px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;
+  font-size:12px;font-weight:600;background:rgba(124,92,255,.18);
+  border:1px solid rgba(124,92,255,.5);animation:pop .25s}
+.chip button{color:#cbb9ff;font-size:13px}
+.chip button:hover{color:#fff}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.none{font-size:12.5px;color:#6d7691;padding:5px 0}
+.tiers{margin-top:14px;border-top:1px solid var(--line);padding-top:13px}
+.trow{display:flex;align-items:center;gap:9px;font-size:12.3px;color:var(--muted);margin-bottom:8px}
+.dot{width:10px;height:10px;border-radius:4px;flex:none}
+
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;z-index:90;display:none;place-items:center;padding:22px;
+  background:rgba(3,4,8,.8);backdrop-filter:blur(9px)}
+.modal.on{display:grid;animation:fade .25s}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.sheet{width:min(520px,100%);max-height:88vh;overflow:auto;border-radius:20px;
+  border:1px solid rgba(255,255,255,.16);background:linear-gradient(180deg,var(--panel2),#0c0e17);
+  box-shadow:0 24px 60px -18px rgba(0,0,0,.9);animation:up .35s cubic-bezier(.22,.61,.36,1)}
+@keyframes up{from{transform:translateY(24px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.confirm{text-align:center;padding:32px 26px 26px}
+.ring{width:72px;height:72px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 30%,rgba(53,214,141,.35),rgba(53,214,141,.08));
+  border:1px solid rgba(53,214,141,.55)}
+.ring svg{width:34px;height:34px;stroke:var(--ok);stroke-width:3;fill:none}
+.ticket{margin:20px 0 0;border-radius:16px;overflow:hidden;text-align:left;
+  background:linear-gradient(140deg,#171b2c,#101322);border:1px solid var(--line)}
+.ttop{display:flex;gap:16px;padding:18px 20px}
+.tposter{width:68px;aspect-ratio:2/3;border-radius:9px;flex:none;border:1px solid var(--line)}
+.tname{font-size:16px;font-weight:750;margin-bottom:8px}
+.trows{display:grid;grid-template-columns:1fr 1fr;gap:9px 16px;margin-top:11px;font-size:12.3px}
+.trows .k{color:var(--muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+.trows .v{font-weight:600}
+.tear{position:relative;height:1px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.2) 0 7px,transparent 7px 14px)}
+.tear::before,.tear::after{content:"";position:absolute;top:50%;width:20px;height:20px;
+  border-radius:50%;background:#0c0e17;transform:translateY(-50%)}
+.tear::before{left:-10px}.tear::after{right:-10px}
+.tbot{display:flex;align-items:center;gap:16px;padding:16px 20px}
+.bars{flex:1;height:48px;border-radius:4px;opacity:.9;
+  background:repeating-linear-gradient(90deg,#eef1f8 0 2px,transparent 2px 4px,#eef1f8 4px 7px,transparent 7px 10px)}
+.bid{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;letter-spacing:.12em;
+  color:var(--gold);margin-top:6px}
+.acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+
+/* ---------- toast ---------- */
+.toasts{position:fixed;right:20px;bottom:20px;z-index:120;display:flex;flex-direction:column;
+  gap:9px;align-items:flex-end}
+.toast{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;
+  font-size:13px;background:rgba(22,26,40,.97);border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 18px 40px -18px rgba(0,0,0,.9);animation:slide .3s;max-width:320px}
+.toast .bar{width:3px;align-self:stretch;border-radius:99px;background:var(--brand)}
+.toast.ok .bar{background:var(--ok)}.toast.warn .bar{background:var(--gold)}
+@keyframes slide{from{transform:translateX(36px);opacity:0}to{transform:none;opacity:1}}
+
+@media (max-width:1000px){.cols{grid-template-columns:1fr}.sum{position:static}}
+@media (max-width:560px){
+  .grid{grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:13px}
+  .seat{width:21px;height:20px}.row{gap:4px}
+  .toasts{left:12px;right:12px}.toast{max-width:none}
+}
+</style>
 </head>
-
 <body>
 
-    <!-- Header -->
-    <header>
-        <h1>🎬 Movie Ticket Booking</h1>
+<header>
+  <div class="wrap nav">
+    <div class="logo"><span class="mark">🎬</span>Cine<b>Verse</b></div>
+    <button class="pill-city" id="cityBtn">📍 <span id="cityName">Mumbai</span></button>
+    <div class="pill-city" style="margin-left:0">My Tickets <span class="count" id="tCount">0</span></div>
+  </div>
+</header>
 
-        <nav>
-            <a href="#home">Home</a>
-            <a href="#movies">Movies</a>
-            <a href="#booking">Book Tickets</a>
-            <a href="#contact">Contact</a>
-        </nav>
-    </header>
+<!-- ============ MOVIE LIST ============ -->
+<section class="view on" id="vHome">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <h2>Now Showing in <span id="cityInline">Mumbai</span></h2>
+        <p class="muted" id="resultLine">Tap any poster to pick your seats</p>
+      </div>
+    </div>
+    <div class="grid" id="movieGrid"></div>
+  </div>
+</section>
 
-    <!-- Home Section -->
-    <section id="home">
+<!-- ============ BOOKING ============ -->
+<section class="view" id="vBook">
+  <div class="wrap">
+    <div class="crumb">
+      <button class="btn sm" id="backBtn">← Back</button>
+      <h2 id="bookTitle">Movie</h2>
+      <span class="muted" style="margin-left:auto;font-size:12.5px" id="bookVenue">PVR Icon · Screen 4</span>
+    </div>
 
-        <h2>Welcome to Movie Booking</h2>
-
-        <p>
-            Book your favorite movie tickets quickly and easily.
-        </p>
-
-    </section>
-
-    <!-- Movies Section -->
-    <section id="movies">
-
-        <h2>Now Showing</h2>
-
-        <div class="movie">
-
-            <h3>Movie 1</h3>
-
-            <p>
-                Genre: Action | Duration: 2h 30min
-            </p>
-
-            <button type="button">
-                Book Now
-            </button>
-
+    <div class="cols">
+      <div>
+        <div class="panel">
+          <div class="phead"><span class="num">1</span><h3>Pick a date</h3>
+            <span class="hint" id="dateHint"></span></div>
+          <div class="dates" id="dateRow"></div>
         </div>
 
-        <div class="movie">
-
-            <h3>Movie 2</h3>
-
-            <p>
-                Genre: Comedy | Duration: 2h 10min
-            </p>
-
-            <button type="button">
-                Book Now
-            </button>
-
+        <div class="panel">
+          <div class="phead"><span class="num">2</span><h3>Choose a showtime</h3>
+            <span class="hint">Prices vary by format</span></div>
+          <div class="shows" id="showRow"></div>
         </div>
 
-        <div class="movie">
-
-            <h3>Movie 3</h3>
-
-            <p>
-                Genre: Drama | Duration: 2h 20min
-            </p>
-
-            <button type="button">
-                Book Now
-            </button>
-
+        <div class="panel">
+          <div class="phead"><span class="num">3</span><h3>Select your seats</h3>
+            <span class="hint">Max 10 per booking</span></div>
+          <div class="screen"></div>
+          <div class="slabel">All eyes this way please</div>
+          <div class="map" id="seatMap"></div>
+          <div class="legend">
+            <span><i class="sw"></i>Available</span>
+            <span><i class="sw s"></i>Selected</span>
+            <span><i class="sw t"></i>Sold out</span>
+            <span><i class="sw" style="border-color:rgba(90,169,255,.6)"></i>Silver</span>
+            <span><i class="sw" style="border-color:rgba(255,196,77,.6)"></i>Gold</span>
+            <span><i class="sw" style="border-color:rgba(177,140,255,.6)"></i>Recliner</span>
+          </div>
         </div>
+      </div>
 
-    </section>
+      <aside class="sum">
+        <div class="panel">
+          <div class="movie-head">
+            <div class="mini" id="sumPoster"></div>
+            <div>
+              <div style="font-size:15px;font-weight:700" id="sumTitle">—</div>
+              <div class="muted" style="font-size:12px;margin-top:5px;line-height:1.6" id="sumMeta">—</div>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="srow"><span class="k">Show</span><span id="sumShow">Not selected</span></div>
+          <div class="srow"><span class="k">Seats</span><span id="sumQty">0</span></div>
+          <div class="chips" id="seatChips"><span class="none">No seats selected yet — tap the map above.</span></div>
+          <div class="divider"></div>
+          <div class="srow"><span class="k">Subtotal</span><span id="sumSub">₹0</span></div>
+          <div class="srow"><span class="k">Convenience fee</span><span id="sumFee">₹0</span></div>
+          <div class="divider"></div>
+          <div class="srow total"><span>Total</span><span id="sumTotal">₹0</span></div>
+          <button class="btn primary block" id="payBtn" style="margin-top:16px" disabled>Proceed to checkout</button>
+          <div class="tiers">
+            <div class="trow"><span class="dot" style="background:var(--silver)"></span>Silver · front rows · ₹150</div>
+            <div class="trow"><span class="dot" style="background:var(--gold)"></span>Gold · prime viewing · ₹280</div>
+            <div class="trow" style="margin-bottom:0"><span class="dot" style="background:var(--brand2)"></span>Recliner · lounge · ₹450</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
 
-    <!-- Booking Section -->
-    <section id="booking">
+<!-- ============ MODAL ============ -->
+<div class="modal" id="modal">
+  <div class="sheet">
+    <div class="confirm">
+      <div class="ring"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+      <h2 style="font-size:22px;font-weight:800">Booking confirmed!</h2>
+      <p class="muted" style="font-size:13px;margin-top:8px">Show this e-ticket at the entrance.</p>
 
-        <h2>Book Your Tickets</h2>
+      <div class="ticket">
+        <div class="ttop">
+          <div class="tposter" id="tPoster"></div>
+          <div style="flex:1;min-width:0">
+            <div class="tname" id="tName"></div>
+            <div style="font-size:12px" class="muted" id="tVenue"></div>
+            <div class="trows">
+              <div><div class="k">Date</div><div class="v" id="tDate"></div></div>
+              <div><div class="k">Time</div><div class="v" id="tTime"></div></div>
+              <div><div class="k">Seats</div><div class="v" id="tSeats"></div></div>
+              <div><div class="k">Paid</div><div class="v" id="tPaid"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="tear"></div>
+        <div class="tbot">
+          <div class="bars"></div>
+          <div><div class="bid" id="tId">CV-000000</div></div>
+        </div>
+      </div>
 
-        <form>
+      <div class="acts">
+        <button class="btn primary" id="doneBtn">Book another</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-            <!-- Customer Name -->
-            <label for="name">
-                Full Name:
-            </label>
+<div class="toasts" id="toasts"></div>
 
-            <input
-                type="text"
-                id="name"
-                name="name"
-                placeholder="Enter your name"
-                required
-            >
+<script>
+/* ============================================================
+   DATA
+   ============================================================ */
+const MOVIES = [
+  {id:1,title:"Neon Horizon",     genre:"Sci-Fi · Action",  lang:"English",min:148,rate:9.1,c1:"#7c5cff",c2:"#2a1350"},
+  {id:2,title:"The Last Monsoon", genre:"Drama · Romance",  lang:"Hindi",  min:132,rate:8.6,c1:"#2a8b7a",c2:"#0d1a2b"},
+  {id:3,title:"Silent Protocol",  genre:"Thriller · Action",lang:"English",min:121,rate:8.3,c1:"#ff5c7a",c2:"#2b1030"},
+  {id:4,title:"Little Lantern",   genre:"Animation · Family",lang:"English",min:96, rate:9.3,c1:"#ffb238",c2:"#5a2d00"},
+  {id:5,title:"Gravity's Edge",   genre:"Sci-Fi · Adventure",lang:"English",min:155,rate:9.0,c1:"#3b6cff",c2:"#0a0f28"},
+  {id:6,title:"Midnight Bazaar",  genre:"Comedy",           lang:"Hindi",  min:118,rate:7.9,c1:"#35d68d",c2:"#08251c"}
+];
 
-            <br><br>
+const TIMES  = ["10:15 AM","01:30 PM","04:45 PM","07:20 PM","10:40 PM"];
+const FORMATS= [["2D",1],["3D",1.3],["IMAX",1.9]];
+const ROWS   = ["A","B","C","D","E","F","G","H"];
+const PER_ROW= 12, AISLE_AT = 6;
+const PRICE  = {silver:150, gold:280, recliner:450};
+const CITIES = ["Mumbai","Delhi NCR","Bengaluru","Hyderabad","Pune"];
+const VENUE  = "PVR Icon · Andheri West · Screen 4";
 
-            <!-- Email -->
-            <label for="email">
-                Email:
-            </label>
+/* ============================================================
+   HELPERS
+   ============================================================ */
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const money = n => "₹" + n.toLocaleString("en-IN");
 
-            <input
-                type="email"
-                id="email"
-                name="email"
-                placeholder="Enter your email"
-                required
-            >
+function hash(s){ let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h; }
+function rng(seed){ let s=seed>>>0; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
 
-            <br><br>
+function tierOf(row){
+  const i = ROWS.indexOf(row);
+  return i<3 ? "silver" : i<6 ? "gold" : "recliner";
+}
+function multOf(fmt){ return FORMATS.find(f=>f[0]===fmt)[1]; }
+function priceOf(row,fmt){ return Math.round(PRICE[tierOf(row)]*multOf(fmt)/10)*10; }
 
-            <!-- Movie Selection -->
-            <label for="movie">
-                Select Movie:
-            </label>
+/* dates: today + next 6 days */
+const DOW=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const TODAY = new Date();
+const DAYS = [0,1,2,3,4,5,6];
+function dateObj(i){ const d=new Date(TODAY); d.setDate(d.getDate()+i); return d; }
+function dateLong(i){ const d=dateObj(i); return DOW[d.getDay()]+", "+d.getDate()+" "+MON[d.getMonth()]; }
 
-            <select id="movie" name="movie" required>
+/* deterministic showtimes per movie + day */
+function showsFor(movie,day){
+  const r = rng(hash(movie.id+"-"+day));
+  const n = 3 + Math.floor(r()*3);
+  const picks = [...TIMES].sort(()=>r()-0.5).slice(0,n)
+                 .sort((a,b)=>TIMES.indexOf(a)-TIMES.indexOf(b));
+  return picks.map(t=>{
+    const fmt = FORMATS[Math.floor(r()*3)][0];
+    return { id: movie.id+"|"+day+"|"+t+"|"+fmt, time:t, fmt:fmt, fill: Math.round(32+r()*62) };
+  });
+}
 
-                <option value="">
-                    -- Select Movie --
-                </option>
+/* deterministic sold seats per show */
+function takenSeats(show){
+  const r = rng(hash(show.id));
+  const set = new Set();
+  const density = 0.16 + r()*0.26;
+  ROWS.forEach(row=>{
+    const prime = ROWS.indexOf(row) >= 3;      // gold + recliner fill faster
+    for(let s=1;s<=PER_ROW;s++){
+      if(r() < density * (prime ? 1.3 : 0.75)) set.add(row+s);
+    }
+  });
+  return set;
+}
 
-                <option value="movie1">
-                    Movie 1
-                </option>
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = { city:"Mumbai", movie:null, day:0, show:null, seats:[], tickets:0 };
 
-                <option value="movie2">
-                    Movie 2
-                </option>
+/* ============================================================
+   TOAST
+   ============================================================ */
+function toast(msg,type){
+  const t = document.createElement("div");
+  t.className = "toast " + (type||"");
+  t.innerHTML = '<span class="bar"></span><span>' + msg + "</span>";
+  $("#toasts").appendChild(t);
+  setTimeout(()=> t.remove(), 3000);
+}
 
-                <option value="movie3">
-                    Movie 3
-                </option>
+/* ============================================================
+   VIEW SWITCH
+   ============================================================ */
+function go(view){
 
-            </select>
+  $$(".view").forEach(v=> v.classList.toggle("on", v.id === "v"+view));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
 
-            <br><br>
+/* ============================================================
+   MOVIE GRID
+   ============================================================ */
+function posterStyle(m){
+  return "background:linear-gradient(150deg," + m.c1 + "," + m.c2 + ")";
+}
 
-            <!-- Date -->
-            <label for="date">
-                Select Date:
-            </label>
+function renderMovies(){
+  const g = $("#movieGrid");
+  g.innerHTML = "";
+  $("#cityInline").textContent = state.city;
 
-            <input
-                type="date"
-                id="date"
-                name="date"
-                required
-            >
+  MOVIES.forEach(m=>{
+    const card = document.createElement("article");
+    card.className = "card";
+    card.innerHTML =
+      '<div class="poster" style="' + posterStyle(m) + '">' +
+        '<span style="position:relative;z-index:2">' + m.title + '</span>' +
+        '<span class="rate">★ ' + m.rate.toFixed(1) + '</span>' +
+        '<div class="overlay"><button class="btn primary sm">🎟️ Book now</button></div>' +
+      '</div>' +
+      '<div class="cbody">' +
+        '<h3>' + m.title + '</h3>' +
+        '<div class="meta">' + m.genre + ' · ' + m.lang + ' · ' + m.min + ' min</div>' +
+      '</div>';
+    card.onclick = ()=> startBooking(m);
+    g.appendChild(card);
+  });
+}
 
-            <br><br>
+/* ============================================================
+   START BOOKING
+   ============================================================ */
+function startBooking(m){
+  state.movie = m;
+  state.day   = 0;
+  state.show  = null;
+  state.seats = [];
 
-            <!-- Show Time -->
-            <label for="time">
-                Select Show Time:
-            </label>
+  $("#bookTitle").textContent = m.title;
+  $("#bookVenue").textContent = VENUE;
+  $("#sumTitle").textContent  = m.title;
+  $("#sumMeta").innerHTML     = m.genre + " · " + m.lang + "<br>" + m.min + " min · ★ " + m.rate.toFixed(1);
+  const sp = $("#sumPoster");
+  sp.style.cssText = "width:64px;aspect-ratio:2/3;border-radius:10px;flex:none;border:1px solid var(--line);" + posterStyle(m);
+  sp.innerHTML = '<div style="display:grid;place-items:center;height:100%;font-size:11px;' +
+                 'font-weight:700;text-align:center;padding:6px;line-height:1.2">' + m.title + '</div>';
 
-            <select id="time" name="time" required>
+  renderDates();
+  renderShows();
+  renderSeats();
+  updateSummary();
+  go("Book");
+  toast("Booking <b>" + m.title + "</b> — pick a show");
+}
 
-                <option value="">
-                    -- Select Time --
-                </option>
+/* ============================================================
+   DATES
+   ============================================================ */
+function renderDates(){
+  const box = $("#dateRow");
+  box.innerHTML = "";
+  DAYS.forEach(i=>{
+    const d = dateObj(i);
+    const b = document.createElement("button");
+    b.className = "date" + (i === state.day ? " on" : "");
+    b.innerHTML = '<div class="dow">' + (i === 0 ? "Today" : DOW[d.getDay()]) + '</div>' +
+                  '<div class="dnum">' + d.getDate() + '</div>' +
+                  '<div class="dmon">' + MON[d.getMonth()] + '</div>';
+    b.onclick = ()=>{
+      state.day = i; state.show = null; state.seats = [];
+      renderDates(); renderShows(); renderSeats(); updateSummary();
+    };
+    box.appendChild(b);
+  });
+  $("#dateHint").textContent = dateLong(state.day);
+}
 
-                <option value="10:00">
-                    10:00 AM
-                </option>
+/* ============================================================
+   SHOWS
+   ============================================================ */
+function renderShows(){
+  const box = $("#showRow");
+  box.innerHTML = "";
+  showsFor(state.movie, state.day).forEach(s=>{
+    const b = document.createElement("button");
+    b.className = "show" + (state.show && state.show.id === s.id ? " on" : "");
+    b.innerHTML =
+      '<div class="t">' + s.time + '</div>' +
+      '<div class="m"><span class="tag">' + s.fmt + '</span>from ' + money(priceOf("D", s.fmt)) + '</div>' +
+      '<div class="m ' + (s.fill > 88 ? "hot" : "") + '">' +
+        (s.fill > 88 ? "Almost full" : s.fill > 70 ? "Filling fast" : "Available") +
+        ' · ' + s.fill + '% full</div>';
+    b.onclick = ()=>{
+      state.show  = s;
+      state.seats = [];
+      renderShows(); renderSeats(); updateSummary();
+    };
+    box.appendChild(b);
+  });
+}
 
-                <option value="13:30">
-                    1:30 PM
-                </option>
+/* ============================================================
+   SEAT MAP
+   ============================================================ */
+function renderSeats(){
+  const map = $("#seatMap");
+  map.innerHTML = "";
 
-                <option value="18:00">
-                    6:00 PM
-                </option>
+  if(!state.show){
+    map.innerHTML = '<div class="none" style="padding:26px 0">Pick a showtime first — the seat map unlocks once you choose a show.</div>';
+    return;
+  }
 
-                <option value="21:00">
-                    9:00 PM
-                </option>
+  const taken = takenSeats(state.show);
 
-            </select>
+  ROWS.forEach(row=>{
+    const r = document.createElement("div");
+    r.className = "row";
 
-            <br><br>
+    r.appendChild(Object.assign(document.createElement("span"), {className:"rlab", textContent:row}));
 
-            <!-- Number of Tickets -->
-            <label for="tickets">
-                Number of Tickets:
-            </label>
+    for(let s=1; s<=PER_ROW; s++){
+      const id = row + s;
+      const seat = document.createElement("button");
+      seat.className = "seat " + tierOf(row);
+      seat.dataset.id = id;
 
-            <input
-                type="number"
-                id="tickets"
-                name="tickets"
-                min="1"
-                max="10"
-                value="1"
-                required
-            >
+      if(taken.has(id)){
+        seat.classList.add("taken");
+        seat.title = "Sold out";
+      }else{
+        seat.title = "Row " + row + ", Seat " + s + " · " +
+                     tierOf(row) + " · " + money(priceOf(row, state.show.fmt));
+        seat.onclick = ()=> toggleSeat(id, row, seat);
+      }
 
-            <br><br>
+      if(state.seats.includes(id)) seat.classList.add("sel");
+      r.appendChild(seat);
 
-            <!-- Seat Type -->
-            <label for="seat">
-                Seat Type:
-            </label>
+      if(s === AISLE_AT){
+        const gap = document.createElement("span");
+        gap.className = "gap";
+        r.appendChild(gap);
+      }
+    }
 
-            <select id="seat" name="seat" required>
+    r.appendChild(Object.assign(document.createElement("span"), {className:"rlab", textContent:row}));
+    map.appendChild(r);
+  });
+}
 
-                <option value="">
-                    -- Select Seat Type --
-                </option>
+function toggleSeat(id, row, btn){
+  const i = state.seats.indexOf(id);
+  if(i > -1){
+    state.seats.splice(i,1);
+    btn.classList.remove("sel");
+  }else{
+    if(state.seats.length >= 10){ toast("Maximum <b>10 seats</b> per booking","warn"); return; }
+    state.seats.push(id);
+    btn.classList.add("sel");
+  }
+  state.seats.sort((a,b)=>{
+    const ra = ROWS.indexOf(a[0]), rb = ROWS.indexOf(b[0]);
+    return ra === rb ? (+a.slice(1) - +b.slice(1)) : ra - rb;
+  });
+  updateSummary();
+}
 
-                <option value="silver">
-                    Silver - ₹150
-                </option>
+/* ============================================================
+   SUMMARY + PRICING
+   ============================================================ */
+function pricing(){
+  const fmt = state.show ? state.show.fmt : "2D";
+  const subtotal = state.seats.reduce((sum,id)=> sum + priceOf(id[0], fmt), 0);
+  const fee = subtotal ? Math.max(30, Math.round(subtotal * 0.12)) : 0;
+  return { subtotal, fee, total: subtotal + fee };
+}
 
-                <option value="gold">
-                    Gold - ₹250
-                </option>
+function updateSummary(){
+  const p = pricing();
 
-                <option value="premium">
-                    Premium - ₹350
-                </option>
+  $("#sumShow").textContent = state.show
+    ? dateLong(state.day).replace(","," ·") + " · " + state.show.time + " · " + state.show.fmt
+    : "Not selected";
+  $("#sumQty").textContent  = state.seats.length;
 
-            </select>
+  const box = $("#seatChips");
+  box.innerHTML = "";
+  if(!state.seats.length){
+    box.innerHTML = '<span class="none">No seats selected yet — tap the map above.</span>';
+  }else{
+    state.seats.forEach(id=>{
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.innerHTML = id + ' <button title="Remove">✕</button>';
+      chip.querySelector("button").onclick = ()=>{
+        state.seats = state.seats.filter(x=> x !== id);
+        const el = document.querySelector('.seat[data-id="' + id + '"]');
+        if(el) el.classList.remove("sel");
+        updateSummary();
+      };
+      box.appendChild(chip);
+    });
+  }
 
-            <br><br>
+  $("#sumSub").textContent   = money(p.subtotal);
+  $("#sumFee").textContent   = money(p.fee);
+  $("#sumTotal").textContent = money(p.total);
+  $("#payBtn").disabled = !(state.show && state.seats.length);
+}
 
-            <!-- Submit Button -->
-            <button type="submit">
-                Book Tickets
-            </button>
+/* ============================================================
+   CONFIRM
+   ============================================================ */
+function bookingId(){
+  return "CV-" + Date.now().toString(36).toUpperCase().slice(-6) +
+         Math.floor(Math.random()*90 + 10);
+}
 
-            <button type="reset">
-                Clear
-            </button>
+function confirmBooking(){
+  if(!state.show || !state.seats.length) return;
 
-        </form>
+  const btn = $("#payBtn");
+  btn.disabled = true;
+  btn.textContent = "Processing payment…";
 
-    </section>
+  setTimeout(()=>{
+    const p = pricing();
+    const m = state.movie;
+    const id = bookingId();
 
-    <!-- Contact Section -->
-    <section id="contact">
+    $("#tName").textContent  = m.title;
+    $("#tVenue").textContent = VENUE;
+    $("#tDate").textContent  = dateLong(state.day);
+    $("#tTime").textContent  = state.show.time + " · " + state.show.fmt;
+    $("#tSeats").textContent = state.seats.join(", ") + " (" + state.seats.length + ")";
+    $("#tPaid").textContent  = money(p.total);
+    $("#tId").textContent    = id;
 
-        <h2>Contact Us</h2>
+    const tp = $("#tPoster");
+    tp.style.cssText = "width:68px;aspect-ratio:2/3;border-radius:9px;flex:none;border:1px solid var(--line);" +
+                       posterStyle(m);
+    tp.innerHTML = '<div style="display:grid;place-items:center;height:100%;font-size:10.5px;' +
+                   'font-weight:700;text-align:center;padding:6px;line-height:1.2">' + m.title + '</div>';
 
-        <p>
-            Email: support@moviebooking.com
-        </p>
+    $("#modal").classList.add("on");
+    state.tickets++;
+    $("#tCount").textContent = state.tickets;
 
-        <p>
-            Phone: +91 98765 43210
-        </p>
+    btn.disabled = false;
+    btn.textContent = "Proceed to checkout";
+    toast("Payment successful — enjoy the show! 🍿","ok");
+  }, 1200);
+}
 
-    </section>
+/* ============================================================
+   WIRING
+   ============================================================ */
+$("#backBtn").onclick = ()=>{
+  state.show = null;
+  state.seats = [];
+  go("Home");
+};
 
-    <!-- Footer -->
-    <footer>
+$("#payBtn").onclick = confirmBooking;
 
-        <p>
-            &copy; 2026 Movie Ticket Booking. All Rights Reserved.
-        </p>
+$("#doneBtn").onclick = ()=>{
+  $("#modal").classList.remove("on");
+  state.show = null;
+  state.seats = [];
+  renderShows();
+  renderSeats();
+  updateSummary();
+  go("Home");
+};
 
-    </footer>
+$("#modal").onclick = e =>{ if(e.target.id === "modal") $("#modal").classList.remove("on"); };
+document.addEventListener("keydown", e=>{ if(e.key === "Escape") $("#modal").classList.remove("on"); });
 
+$("#cityBtn").onclick = ()=>{
+  const i = CITIES.indexOf(state.city);
+  state.city = CITIES[(i+1) % CITIES.length];
+  $("#cityName").textContent = state.city;
+  renderMovies();
+  toast("Now showing in <b>" + state.city + "</b>");
+};
+
+/* boot */
+renderMovies();
+</script>
 </body>
-
 </html>
+
+
+    
+            
+
